@@ -3,7 +3,7 @@
 
 use panic_halt as _;
 
-use stm32f407g_disc as board;
+use stm32f411e_disco as board;
 
 use crate::board::{
     hal::prelude::*,

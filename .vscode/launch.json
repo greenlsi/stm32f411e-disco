@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "showDevDebugOutput": true,
+    "configurations": [
+        {
+            "name": "Debug (Blinky)",
+            "type": "cortex-debug",
+            "preLaunchTask": "build-blinky",
+            "request": "launch",
+            "servertype": "openocd",
+            "cwd": "${workspaceRoot}",
+            "executable": "${workspaceRoot}/target/thumbv7em-none-eabihf/debug/examples/gpio_hal_blinky",
+            "device": "STM32F411VET6",
+            "svdFile": "${workspaceRoot}/STM32F411.svd",
+            "configFiles": [
+                "interface/stlink.cfg",
+                "target/stm32f4x.cfg"
+            ],
+            "runToEntryPoint": "main",
+        },
+    ]
+}

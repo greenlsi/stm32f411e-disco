@@ -1,20 +1,20 @@
 [package]
 edition = "2018"
-authors = ["Daniel Egger <daniel@eggers-club.de>"]
+authors = ["Daniel Egger <daniel@eggers-club.de>", "Román Cárdenas <rcardenas@upm.es>"]
 categories = [
     "embedded",
     "no-std",
 ]
-description = "Board support crate for the STM32F407G DISCOVERY microcontroller board"
-documentation = "https://docs.rs/crate/stm32f407g-disc"
+description = "Board support crate for the STM32F411E DISCOVERY microcontroller board"
+documentation = "https://docs.rs/crate/stm32f411e-disco"
 keywords = [
     "arm",
     "cortex-m",
     "template",
 ]
 license = "0BSD"
-name = "stm32f407g-disc"
-repository = "https://github.com/stm32-rs/stm32f407g-disc"
+name = "stm32f411e-disco"
+repository = "https://github.com/greenlsi/stm32f411e-disco"
 version = "0.4.1"
 readme = "README.md"
 
@@ -34,7 +34,7 @@ version = "0.2"
 
 [dependencies.stm32f4xx-hal]
 default-features = false
-features = ["rt", "stm32f407"]
+features = ["rt", "stm32f411"]
 version = "0.9.0"
 
 [dev-dependencies]

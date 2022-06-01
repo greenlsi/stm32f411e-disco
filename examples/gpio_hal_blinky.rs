@@ -4,7 +4,7 @@
 
 use panic_halt as _;
 
-use stm32f407g_disc as board;
+use stm32f411e_disco as board;
 
 use crate::board::{
     hal::stm32,
@@ -27,8 +27,8 @@ fn main() -> ! {
         // Constrain clock registers
         let rcc = p.RCC.constrain();
 
-        // Configure clock to 168 MHz (i.e. the maximum) and freeze it
-        let clocks = rcc.cfgr.sysclk(168.mhz()).freeze();
+        // Configure clock to 1OO MHz (i.e. the maximum) and freeze it
+        let clocks = rcc.cfgr.sysclk(100.mhz()).freeze();
 
         // Get delay provider
         let mut delay = Delay::new(cp.SYST, clocks);

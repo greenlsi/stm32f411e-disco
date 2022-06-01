@@ -7,7 +7,7 @@
 #![no_main]
 #![no_std]
 
-use stm32f407g_disc as board;
+use stm32f411e_disco as board;
 
 use nb::block;
 

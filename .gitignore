@@ -7,3 +7,5 @@ Cargo.lock
 bloat_log*
 itm.txt
 .gdb_history
+.DS_Store
+.vscode/.cortex-debug*
