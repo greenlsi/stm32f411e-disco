@@ -9,9 +9,9 @@
 #![no_main]
 #![no_std]
 
+extern crate embedded_hal as hal;
 extern crate panic_itm;
 extern crate stm32f411e_disco as board;
-extern crate embedded_hal as hal;
 
 use board::hal::prelude::*;
 use board::hal::stm32;
@@ -21,17 +21,17 @@ use cortex_m_rt::entry;
 
 #[entry]
 fn main() -> ! {
-	if let (Some(p), Some(cp)) = (stm32::Peripherals::take(), Peripherals::take()) {
-	    // Constrain clock registers
-	    let rcc = p.RCC.constrain();
-	    // Configure clock to 100 MHz (i.e. the maximum) and freeze it
-	    rcc.cfgr.sysclk(100.mhz()).freeze();
+    if let (Some(p), Some(cp)) = (stm32::Peripherals::take(), Peripherals::take()) {
+        // Constrain clock registers
+        let rcc = p.RCC.constrain();
+        // Configure clock to 100 MHz (i.e. the maximum) and freeze it
+        rcc.cfgr.sysclk(100.mhz()).freeze();
 
-	    let mut itm = cp.ITM;
-	    let stim = &mut itm.stim[0];
+        let mut itm = cp.ITM;
+        let stim = &mut itm.stim[0];
 
-	    iprintln!(stim, "Hello, world!");
-	}
+        iprintln!(stim, "Hello, world!");
+    }
 
     loop {}
 }

@@ -2,7 +2,8 @@
 #![no_main]
 #![no_std]
 
-use panic_halt as _;
+extern crate panic_itm;
+use cortex_m::{iprintln, Peripherals};
 
 use stm32f411e_disco as board;
 
@@ -12,7 +13,7 @@ use crate::board::{
     led::{LedColor, Leds},
 };
 
-use cortex_m::peripheral::Peripherals;
+//use cortex_m::peripheral::Peripherals;
 
 use cortex_m_rt::entry;
 
@@ -32,6 +33,11 @@ fn main() -> ! {
 
         // Get delay provider
         let mut delay = Delay::new(cp.SYST, clocks);
+
+        let mut itm = cp.ITM;
+        let stim = &mut itm.stim[0];
+
+        iprintln!(stim, "Hello, world!");
 
         loop {
             // Turn LEDs on one after the other with 500ms delay between them
