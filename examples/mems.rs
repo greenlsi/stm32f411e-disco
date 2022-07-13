@@ -5,6 +5,9 @@
 #![no_main]
 #![no_std]
 
+use board::gpio::gpioa;
+use board::gpio::gpiod;
+use board::gpiob;
 use panic_itm as _;
 
 use stm32f411e_disco as board;

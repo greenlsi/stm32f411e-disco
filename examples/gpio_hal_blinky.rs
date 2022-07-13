@@ -34,20 +34,24 @@ fn main() -> ! {
         // Get delay provider
         let mut delay = Delay::new(cp.SYST, clocks);
 
+
         let mut itm = cp.ITM;
         let stim = &mut itm.stim[0];
-
         iprintln!(stim, "Hello, world!");
 
         loop {
             // Turn LEDs on one after the other with 500ms delay between them
             leds[LedColor::Orange].on();
+            iprintln!(stim, "Led naranja ON");
             delay.delay_ms(500_u16);
             leds[LedColor::Red].on();
+            iprintln!(stim, "Led rojo ON");
             delay.delay_ms(500_u16);
             leds[LedColor::Blue].on();
+            iprintln!(stim, "Led azul ON");
             delay.delay_ms(500_u16);
             leds[LedColor::Green].on();
+            iprintln!(stim, "Led verde ON");
             delay.delay_ms(500_u16);
 
             // Delay twice for half a second due to limited timer resolution
