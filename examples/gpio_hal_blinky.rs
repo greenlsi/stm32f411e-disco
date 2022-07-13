@@ -34,7 +34,6 @@ fn main() -> ! {
         // Get delay provider
         let mut delay = Delay::new(cp.SYST, clocks);
 
-
         let mut itm = cp.ITM;
         let stim = &mut itm.stim[0];
         iprintln!(stim, "Hello, world!");

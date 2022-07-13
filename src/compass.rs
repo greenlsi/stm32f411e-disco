@@ -4,15 +4,15 @@ use lsm303dlhc;
 use crate::hal::gpio;
 use crate::hal::gpio::gpiob;
 use crate::hal::gpio::gpioe;
+use crate::hal::i2c;
 use crate::hal::prelude::*;
 use crate::hal::rcc;
-use crate::hal::i2c;
 use crate::hal::stm32;
 
 use embedded_hal;
 use embedded_hal::digital::v2::OutputPin;
 
-type I2c1=i2c::I2c<
+type I2c1 = i2c::I2c<
     stm32::I2C1,
     (
         gpiob::PB6<gpio::Alternate<gpio::AF4>>,
@@ -21,7 +21,7 @@ type I2c1=i2c::I2c<
 >;
 
 pub struct Compass {
-    lsm303dlhc: lsm303dlhc::lsm303dlhc<I2c1>
+    lsm303dlhc: lsm303dlhc::lsm303dlhc<I2c1>,
 }
 
 impl Compass {
@@ -30,24 +30,32 @@ impl Compass {
         gpioe: gpioe::Parts,
         i2c1: stm32::I2C1,
         clocks: rcc::Clocks,
-    )-> Self{
-        let scl = gpiob.pb6.into_alternate_af4().internal_pull_up(true).set_open_drain();
-        let sda = gpiob.pb7.into_alternate_af4().internal_pull_up(true).set_open_drain();
+    ) -> Self {
+        let scl = gpiob
+            .pb6
+            .into_alternate_af4()
+            .internal_pull_up(true)
+            .set_open_drain();
+        let sda = gpiob
+            .pb7
+            .into_alternate_af4()
+            .internal_pull_up(true)
+            .set_open_drain();
 
         let i2c_mode = i2c::Mode {
             polarity: i2c::Polarity::IdleLow,
             phase: i2c::Phase::CaptureOnFirstTransition,
         };
 
-        let i2c = i2c::I2c::i2c1(i2c1, (scl,sda), i2c_mode, 400.khz().into(), clocks);
+        let i2c = i2c::I2c::i2c1(i2c1, (scl, sda), i2c_mode, 400.khz().into(), clocks);
 
         let config = lsm303dlhc::Config {
             scale: lsm303dlhc::Scale::PlusMinus8G,
             ..Default::default()
         };
-        let lsm303dlhc = lsm303dlhc::lsm303dlhc::new(i2c,config);
+        let lsm303dlhc = lsm303dlhc::lsm303dlhc::new(i2c, config);
 
-        Self{ lsm303dlhc }
+        Self { lsm303dlhc }
     }
 }
 
