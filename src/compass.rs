@@ -37,6 +37,7 @@ impl Compass {
         let i2c = i2c::I2c::new(i2c1, (scl, sda), 400.khz().into(), clocks);
 
         //let lsm303dlhc = lsm303dlhc::Lsm303dlhc::new(i2c);
+        // Lo suyo sería ser más "delicado" con los errores
         let lsm303dlhc = Lsm303dlhc::new(i2c).unwrap();
 
         Self { lsm303dlhc }
@@ -48,6 +49,7 @@ impl accelerometer::RawAccelerometer<accelerometer::vector::I16x3> for Compass {
     fn accel_raw(
         &mut self,
     ) -> Result<accelerometer::vector::I16x3, accelerometer::Error<Self::Error>> {
+        // En esta función trato los errores adecuadamente. Échale un vistazo:
         match self.lsm303dlhc.accel() {
             Ok(read) => Ok(accelerometer::vector::I16x3::new(read.x, read.y, read.z)),
             Err(err) => Err(Error::<Self::Error>::new_with_cause(ErrorKind::Device, err)),
