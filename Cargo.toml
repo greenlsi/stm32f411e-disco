@@ -27,6 +27,7 @@ accelerometer = "0.11.0"
 cortex-m = "0.7.2"
 cortex-m-rt = "0.6.13"
 lis302dl = "0.1.0"
+lsm303dlhc = "0.2.0"
 
 [dependencies.embedded-hal]
 features = ["unproven"]
