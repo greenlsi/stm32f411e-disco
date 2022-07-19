@@ -1,11 +1,12 @@
 use accelerometer::{Error, ErrorKind, RawAccelerometer};
-use lsm303dlhc::Lsm303dlhc;
+use lsm303dlhc::{Lsm303dlhc, Sensitivity, AccelOdr};
 
 use crate::hal::gpio::{self, gpiob};
 use crate::hal::i2c;
 use crate::hal::prelude::*;
 use crate::hal::rcc;
 use crate::hal::stm32;
+use embedded_hal::blocking::i2c::{Write, WriteRead};
 
 const SCALE: f32 = 4.6 / 256.0; // TODO alomejor esto hay que cambiarlo -> el acelerómetro es de 16 bits!
 
@@ -19,6 +20,8 @@ type I2c1 = i2c::I2c<
 
 pub struct Compass {
     lsm303dlhc: lsm303dlhc::Lsm303dlhc<I2c1>,
+    odr: lsm303dlhc::AccelOdr,
+    sensitivity: lsm303dlhc::Sensitivity,
 }
 
 impl Compass {
@@ -39,8 +42,16 @@ impl Compass {
         //let lsm303dlhc = lsm303dlhc::Lsm303dlhc::new(i2c);
         // Lo suyo sería ser más "delicado" con los errores
         let lsm303dlhc = Lsm303dlhc::new(i2c).unwrap();
+        let odr = lsm303dlhc::AccelOdr::Hz400;
+        let sensitivity = Sensitivity::G1;
 
-        Self { lsm303dlhc }
+        Self { lsm303dlhc, odr, sensitivity }
+    }
+    fn set_accel_odr(&mut self, odr: AccelOdr) -> Result<(), E> {
+        self.odr
+    }
+    fn set_accel_sensitivity(&mut self, sensitivity: Sensitivity) -> Result<(), E> {
+        self.sensitivity
     }
 }
 
@@ -63,7 +74,7 @@ impl accelerometer::Accelerometer for Compass {
         // modify_accel_register es privado, no podemos usarlo
         // lo suyo sería hacer un fork de la librería del acelerómetro y ponerla bien
         // Pero bueno, de momento lo que podemos hacer es lanzar 400 (que es el valor por defecto).
-        Ok(400.)
+        Ok(self.set_accel_odr(self.odr))
         // También podríamos lanzar un error
         //Err(Error::<Self::Error>::new(ErrorKind::Device))
         /*
