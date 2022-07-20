@@ -7,13 +7,13 @@ use crate::hal::prelude::*;
 use crate::hal::rcc;
 use crate::hal::stm32;
 
-const MAX: f32 = 32786.; //Máximo valor que puede dar el acelerómetro de 16 bits. 2^(n-1) = 2^15
+const MAX: f32 = 32786.; //Yo usaría la macro como en el ejemplo que me pasaste
 
 type I2c1 = i2c::I2c<
     stm32::I2C1,
     (
         gpiob::PB6<gpio::AlternateOD<gpio::AF4>>,
-        gpiob::PB7<gpio::AlternateOD<gpio::AF4>>,
+        gpiob::PB9<gpio::AlternateOD<gpio::AF4>>, // el pin este estaba mal
     ),
 >;
 
@@ -31,7 +31,7 @@ impl Compass {
             .internal_pull_up(true)
             .set_open_drain();
         let sda = gpiob
-            .pb7
+            .pb9
             .into_alternate_af4()
             .internal_pull_up(true)
             .set_open_drain();
@@ -51,9 +51,20 @@ impl Compass {
         }
     }
     pub fn set_accel_odr(&mut self, odr: AccelOdr) -> Result<(), i2c::Error> {
+        // No modificabas sensitivity!
+        self.odr = match odr { // AccelOdr no implementa el trato Copy, así que toca hacer esta chapuza... A ver si mejoro la librería del compass
+            AccelOdr::Hz1 => AccelOdr::Hz1,
+            AccelOdr::Hz10 => AccelOdr::Hz10,
+            AccelOdr::Hz25 => AccelOdr::Hz25,
+            AccelOdr::Hz50 => AccelOdr::Hz50,
+            AccelOdr::Hz100 => AccelOdr::Hz100,
+            AccelOdr::Hz200 => AccelOdr::Hz200,
+            AccelOdr::Hz400 => AccelOdr::Hz400,
+        };
         self.lsm303dlhc.accel_odr(odr)
     }
     pub fn set_accel_sensitivity(&mut self, sensitivity: Sensitivity) -> Result<(), i2c::Error> {
+        self.sensitivity = sensitivity; // No modificabas sensitivity!
         self.lsm303dlhc.set_accel_sensitivity(sensitivity)
     }
     pub fn range(&self) -> f32 {
@@ -71,7 +82,6 @@ impl accelerometer::RawAccelerometer<accelerometer::vector::I16x3> for Compass {
     fn accel_raw(
         &mut self,
     ) -> Result<accelerometer::vector::I16x3, accelerometer::Error<Self::Error>> {
-        // En esta función trato los errores adecuadamente. Échale un vistazo:
         match self.lsm303dlhc.accel() {
             Ok(read) => Ok(accelerometer::vector::I16x3::new(read.x, read.y, read.z)),
             Err(err) => Err(accelerometer::Error::<Self::Error>::new_with_cause(
@@ -94,23 +104,13 @@ impl accelerometer::Accelerometer for Compass {
             AccelOdr::Hz200 => Ok(200.),
             AccelOdr::Hz400 => Ok(400.),
         }
-        // modify_accel_register es privado, no podemos usarlo
-        // lo suyo sería hacer un fork de la librería del acelerómetro y ponerla bien
-        // Pero bueno, de momento lo que podemos hacer es lanzar 400 (que es el valor por defecto).
-        // También podríamos lanzar un error
-        //Err(Error::<Self::Error>::new(ErrorKind::Device))
-        /*
-        self.lsm303dlhc.modify_accel_register(CTRL_REG1_A, |r| {
-            r & !(0b1111 << 4) | ((lsm303dlhc::AccelOdr as u8) << 4)
-        })
-        */
     }
 
     fn accel_norm(
         &mut self,
     ) -> Result<accelerometer::vector::F32x3, accelerometer::Error<Self::Error>> {
         let raw_acceleration = self.accel_raw()?;
-        let rango: f32 = self.range(); //Me da error de que no coincide el return de la función con el tipo de variable donde lo guardo
+        let rango: f32 = self.range();
         let x = raw_acceleration.x as f32 * (rango / MAX);
         let y = raw_acceleration.y as f32 * (rango / MAX);
         let z = raw_acceleration.z as f32 * (rango / MAX);

@@ -26,6 +26,8 @@ use accelerometer::orientation::Tracker;
 use accelerometer::Accelerometer;
 use board::compass::Compass;
 
+use lsm303dlhc::Sensitivity;
+
 #[entry]
 fn main() -> ! {
     if let (Some(p), Some(cp)) = (stm32::Peripherals::take(), Peripherals::take()) {
@@ -45,6 +47,7 @@ fn main() -> ! {
         let clocks = rcc.cfgr.sysclk(100.mhz()).freeze();
 
         let mut compass = Compass::new(gpiob, p.I2C1, clocks);
+        let _ = compass.set_accel_sensitivity(Sensitivity::G12).unwrap();
         let mut tracker = Tracker::new(0.2);
 
         loop {
