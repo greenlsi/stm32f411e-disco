@@ -1,4 +1,4 @@
-use accelerometer::{Error, ErrorKind, RawAccelerometer};
+use accelerometer::{self, ErrorKind, RawAccelerometer};
 use lsm303dlhc::{Lsm303dlhc, Sensitivity, AccelOdr};
 
 use crate::hal::gpio::{self, gpiob};
@@ -6,9 +6,8 @@ use crate::hal::i2c;
 use crate::hal::prelude::*;
 use crate::hal::rcc;
 use crate::hal::stm32;
-use embedded_hal::blocking::i2c::{Write, WriteRead};
 
-const SCALE: f32 = 4.6 / 256.0; // TODO alomejor esto hay que cambiarlo -> el acelerómetro es de 16 bits!
+const MAX: f32 = 32786.; //Máximo valor que puede dar el acelerómetro de 16 bits. 2^(n-1) = 2^15
 
 type I2c1 = i2c::I2c<
     stm32::I2C1,
@@ -25,7 +24,7 @@ pub struct Compass {
 }
 
 impl Compass {
-    pub fn new(gpiob: gpiob::Parts, i2c1: stm32::I2C1, clocks: rcc::Clocks) -> Self {
+    pub fn new(gpiob: gpiob::Parts, i2c1: stm32::I2C1, clocks: rcc::Clocks) ->Self {
         let scl = gpiob
             .pb6
             .into_alternate_af4()
@@ -42,16 +41,24 @@ impl Compass {
         //let lsm303dlhc = lsm303dlhc::Lsm303dlhc::new(i2c);
         // Lo suyo sería ser más "delicado" con los errores
         let lsm303dlhc = Lsm303dlhc::new(i2c).unwrap();
-        let odr = lsm303dlhc::AccelOdr::Hz400;
+        let odr = AccelOdr::Hz400;
         let sensitivity = Sensitivity::G1;
 
         Self { lsm303dlhc, odr, sensitivity }
     }
-    fn set_accel_odr(&mut self, odr: AccelOdr) -> Result<(), E> {
-        self.odr
+    fn set_accel_odr(&mut self, odr: AccelOdr) -> Result<(), i2c::Error> {
+        self.lsm303dlhc.accel_odr(odr)
     }
-    fn set_accel_sensitivity(&mut self, sensitivity: Sensitivity) -> Result<(), E> {
-        self.sensitivity
+    fn set_accel_sensitivity(&mut self, sensitivity: Sensitivity) -> Result<(), i2c::Error> {
+        self.lsm303dlhc.set_accel_sensitivity(sensitivity)
+    }
+    fn range (&self) -> f32 {
+        match self.sensitivity {
+            Sensitivity::G1 => 2.,
+            Sensitivity::G2 => 4.,
+            Sensitivity::G4 => 8.,
+            Sensitivity::G12 => 16.,
+        }
     }
 }
 
@@ -63,7 +70,7 @@ impl accelerometer::RawAccelerometer<accelerometer::vector::I16x3> for Compass {
         // En esta función trato los errores adecuadamente. Échale un vistazo:
         match self.lsm303dlhc.accel() {
             Ok(read) => Ok(accelerometer::vector::I16x3::new(read.x, read.y, read.z)),
-            Err(err) => Err(Error::<Self::Error>::new_with_cause(ErrorKind::Device, err)),
+            Err(err) => Err(accelerometer::Error::<Self::Error>::new_with_cause(ErrorKind::Device, err)),
         }
     }
 }
@@ -71,10 +78,18 @@ impl accelerometer::RawAccelerometer<accelerometer::vector::I16x3> for Compass {
 impl accelerometer::Accelerometer for Compass {
     type Error = i2c::Error;
     fn sample_rate(&mut self) -> Result<f32, accelerometer::Error<Self::Error>> {
+        match self.odr {
+            AccelOdr::Hz1 => Ok(1.),
+            AccelOdr::Hz10 => Ok(10.),
+            AccelOdr::Hz25 => Ok(25.),
+            AccelOdr::Hz50 => Ok(50.),
+            AccelOdr::Hz100 => Ok(100.),
+            AccelOdr::Hz200 => Ok(200.),
+            AccelOdr::Hz400 => Ok(400.),
+        }
         // modify_accel_register es privado, no podemos usarlo
         // lo suyo sería hacer un fork de la librería del acelerómetro y ponerla bien
         // Pero bueno, de momento lo que podemos hacer es lanzar 400 (que es el valor por defecto).
-        Ok(self.set_accel_odr(self.odr))
         // También podríamos lanzar un error
         //Err(Error::<Self::Error>::new(ErrorKind::Device))
         /*
@@ -87,11 +102,15 @@ impl accelerometer::Accelerometer for Compass {
     fn accel_norm(
         &mut self,
     ) -> Result<accelerometer::vector::F32x3, accelerometer::Error<Self::Error>> {
-        let raw_acceleration: accelerometer::vector::I16x3 = self.accel_raw().unwrap();
+        let raw_acceleration = self.accel_raw()?;
+        let rango: f32 = self.range(); //Me da error de que no coincide el return de la función con el tipo de variable donde lo guardo
+        let x = raw_acceleration.x as f32 * (rango / MAX);
+        let y = raw_acceleration.y as f32 * (rango / MAX);
+        let z = raw_acceleration.z as f32 * (rango / MAX);
         Ok(accelerometer::vector::F32x3::new(
-            raw_acceleration.x as f32 * SCALE,
-            raw_acceleration.y as f32 * SCALE,
-            raw_acceleration.z as f32 * SCALE,
+            x,
+            y,
+            z,
         ))
     }
 }
