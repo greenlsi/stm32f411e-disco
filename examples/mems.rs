@@ -30,61 +30,60 @@ use lsm303dlhc::Sensitivity;
 
 #[entry]
 fn main() -> ! {
-    if let (Some(p), Some(cp)) = (stm32::Peripherals::take(), Peripherals::take()) {
-        // let gpioa = p.GPIOA.split();
-        let gpiod = p.GPIOD.split();
-        // let gpioe = p.GPIOE.split();
-        let gpiob = p.GPIOB.split();
-        let mut itm = cp.ITM;
+    let p = stm32::Peripherals::take().unwrap();
+    let cp = Peripherals::take().unwrap();
+        
+    // let gpioa = p.GPIOA.split();
+    let gpiod = p.GPIOD.split();
+    // let gpioe = p.GPIOE.split();
+    let gpiob = p.GPIOB.split();
+    let mut itm = cp.ITM;
 
-        // Initialize on-board LEDs
-        let mut leds = Leds::new(gpiod);
+    // Initialize on-board LEDs
+    let mut leds = Leds::new(gpiod);
 
-        // Constrain clock registers
-        let rcc = p.RCC.constrain();
+    // Constrain clock registers
+    let rcc = p.RCC.constrain();
 
-        // Configure clock to 100 MHz (i.e. the maximum) and freeze it
-        let clocks = rcc.cfgr.sysclk(100.mhz()).freeze();
+    // Configure clock to 100 MHz (i.e. the maximum) and freeze it
+    let clocks = rcc.cfgr.sysclk(100.mhz()).freeze();
 
-        let mut compass = Compass::new(gpiob, p.I2C1, clocks);
-        let _ = compass.set_accel_sensitivity(Sensitivity::G12).unwrap();
-        let mut tracker = Tracker::new(0.2);
+    let mut compass = Compass::new(gpiob, p.I2C1, clocks);
+    compass.set_accel_sensitivity(Sensitivity::G12).unwrap();
+    let mut tracker = Tracker::new(0.2);
 
-        loop {
-            let acceleration = compass.accel_norm().unwrap();
-            let orientation = tracker.update(acceleration);
+    loop {
+        let acceleration = compass.accel_norm().unwrap();
+        let orientation = tracker.update(acceleration);
 
-            iprintln!(
-                &mut itm.stim[0],
-                "received {:?} : {}, {}, {}",
-                orientation,
-                acceleration.x,
-                acceleration.y,
-                acceleration.z,
-            );
+        iprintln!(
+            &mut itm.stim[0],
+            "received {:?} : {}, {}, {}",
+            orientation,
+            acceleration.x,
+            acceleration.y,
+            acceleration.z,
+        );
 
-            for led in leds.iter_mut() {
-                led.off();
-            }
+        for led in leds.iter_mut() {
+            led.off();
+        }
 
-            // x+ red
-            // x- green
-            // y+ orange
-            // y- blue
+        // x+ red
+        // x- green
+        // y+ orange
+        // y- blue
 
-            if acceleration.y > 0.0 {
-                leds[LedColor::Orange].on();
-            } else {
-                leds[LedColor::Blue].on();
-            }
+        if acceleration.y > 0.0 {
+            leds[LedColor::Orange].on();
+        } else {
+            leds[LedColor::Blue].on();
+        }
 
-            if acceleration.x > 0.0 {
-                leds[LedColor::Red].on();
-            } else {
-                leds[LedColor::Green].on();
-            }
+        if acceleration.x > 0.0 {
+            leds[LedColor::Red].on();
+        } else {
+            leds[LedColor::Green].on();
         }
     }
-
-    loop {}
 }

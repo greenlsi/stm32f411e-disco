@@ -52,7 +52,8 @@ impl Compass {
     }
     pub fn set_accel_odr(&mut self, odr: AccelOdr) -> Result<(), i2c::Error> {
         // No modificabas sensitivity!
-        self.odr = match odr { // AccelOdr no implementa el trato Copy, así que toca hacer esta chapuza... A ver si mejoro la librería del compass
+        self.odr = match odr {
+            // AccelOdr no implementa el trato Copy, así que toca hacer esta chapuza... A ver si mejoro la librería del compass
             AccelOdr::Hz1 => AccelOdr::Hz1,
             AccelOdr::Hz10 => AccelOdr::Hz10,
             AccelOdr::Hz25 => AccelOdr::Hz25,
