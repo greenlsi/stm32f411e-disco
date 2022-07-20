@@ -101,10 +101,10 @@ pub struct Led {
 macro_rules! ctor {
 	($($ldx:ident),+) => {
 		$(
-			impl Into<Led> for $ldx {
-				fn into(self) -> Led {
+			impl From<$ldx> for Led {
+				fn from(p: $ldx) -> Self {
 					Led {
-						pin: self.downgrade(),
+						pin: p.downgrade(),
 					}
 				}
 			}

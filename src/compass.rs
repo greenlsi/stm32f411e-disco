@@ -1,5 +1,5 @@
 use accelerometer::{self, ErrorKind, RawAccelerometer};
-use lsm303dlhc::{Lsm303dlhc, Sensitivity, AccelOdr};
+use lsm303dlhc::{AccelOdr, Lsm303dlhc, Sensitivity};
 
 use crate::hal::gpio::{self, gpiob};
 use crate::hal::i2c;
@@ -24,7 +24,7 @@ pub struct Compass {
 }
 
 impl Compass {
-    pub fn new(gpiob: gpiob::Parts, i2c1: stm32::I2C1, clocks: rcc::Clocks) ->Self {
+    pub fn new(gpiob: gpiob::Parts, i2c1: stm32::I2C1, clocks: rcc::Clocks) -> Self {
         let scl = gpiob
             .pb6
             .into_alternate_af4()
@@ -36,7 +36,7 @@ impl Compass {
             .internal_pull_up(true)
             .set_open_drain();
 
-        let i2c = i2c::I2c::new(i2c1, (scl, sda), 400.khz().into(), clocks);
+        let i2c = i2c::I2c::new(i2c1, (scl, sda), 400.khz(), clocks);
 
         //let lsm303dlhc = lsm303dlhc::Lsm303dlhc::new(i2c);
         // Lo suyo sería ser más "delicado" con los errores
@@ -44,15 +44,19 @@ impl Compass {
         let odr = AccelOdr::Hz400;
         let sensitivity = Sensitivity::G1;
 
-        Self { lsm303dlhc, odr, sensitivity }
+        Self {
+            lsm303dlhc,
+            odr,
+            sensitivity,
+        }
     }
-    fn set_accel_odr(&mut self, odr: AccelOdr) -> Result<(), i2c::Error> {
+    pub fn set_accel_odr(&mut self, odr: AccelOdr) -> Result<(), i2c::Error> {
         self.lsm303dlhc.accel_odr(odr)
     }
-    fn set_accel_sensitivity(&mut self, sensitivity: Sensitivity) -> Result<(), i2c::Error> {
+    pub fn set_accel_sensitivity(&mut self, sensitivity: Sensitivity) -> Result<(), i2c::Error> {
         self.lsm303dlhc.set_accel_sensitivity(sensitivity)
     }
-    fn range (&self) -> f32 {
+    pub fn range(&self) -> f32 {
         match self.sensitivity {
             Sensitivity::G1 => 2.,
             Sensitivity::G2 => 4.,
@@ -70,7 +74,10 @@ impl accelerometer::RawAccelerometer<accelerometer::vector::I16x3> for Compass {
         // En esta función trato los errores adecuadamente. Échale un vistazo:
         match self.lsm303dlhc.accel() {
             Ok(read) => Ok(accelerometer::vector::I16x3::new(read.x, read.y, read.z)),
-            Err(err) => Err(accelerometer::Error::<Self::Error>::new_with_cause(ErrorKind::Device, err)),
+            Err(err) => Err(accelerometer::Error::<Self::Error>::new_with_cause(
+                ErrorKind::Device,
+                err,
+            )),
         }
     }
 }
@@ -107,10 +114,6 @@ impl accelerometer::Accelerometer for Compass {
         let x = raw_acceleration.x as f32 * (rango / MAX);
         let y = raw_acceleration.y as f32 * (rango / MAX);
         let z = raw_acceleration.z as f32 * (rango / MAX);
-        Ok(accelerometer::vector::F32x3::new(
-            x,
-            y,
-            z,
-        ))
+        Ok(accelerometer::vector::F32x3::new(x, y, z))
     }
 }
