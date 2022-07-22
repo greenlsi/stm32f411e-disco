@@ -5,10 +5,6 @@
 #![no_main]
 #![no_std]
 
-// use board::gpio::gpioa;
-// use board::gpio::gpiod;
-// use board::gpiob;
-//use board::i2c1;
 use panic_itm as _;
 
 use stm32f411e_disco as board;
@@ -32,11 +28,9 @@ use lsm303dlhc::Sensitivity;
 fn main() -> ! {
     let p = stm32::Peripherals::take().unwrap();
     let cp = Peripherals::take().unwrap();
-        
-    // let gpioa = p.GPIOA.split();
-    let gpiod = p.GPIOD.split();
-    // let gpioe = p.GPIOE.split();
+
     let gpiob = p.GPIOB.split();
+    let gpiod = p.GPIOD.split();
     let mut itm = cp.ITM;
 
     // Initialize on-board LEDs
@@ -48,8 +42,11 @@ fn main() -> ! {
     // Configure clock to 100 MHz (i.e. the maximum) and freeze it
     let clocks = rcc.cfgr.sysclk(100.mhz()).freeze();
 
-    let mut compass = Compass::new(gpiob, p.I2C1, clocks);
+    // Set up the compass and the accelerometer sensitivity
+    let mut compass = Compass::new(gpiob, p.I2C1, clocks).unwrap();
     compass.set_accel_sensitivity(Sensitivity::G12).unwrap();
+
+    // Tracker to know the orientation of the board
     let mut tracker = Tracker::new(0.2);
 
     loop {

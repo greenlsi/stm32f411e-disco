@@ -8,12 +8,9 @@ use cortex_m::{iprintln, Peripherals};
 use stm32f411e_disco as board;
 
 use crate::board::{
-    hal::stm32,
-    hal::{delay::Delay, prelude::*},
+    hal::{stm32, delay::Delay, prelude::*},
     led::{LedColor, Leds},
 };
-
-//use cortex_m::peripheral::Peripherals;
 
 use cortex_m_rt::entry;
 
