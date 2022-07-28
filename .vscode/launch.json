@@ -60,5 +60,34 @@
             },
             "runToEntryPoint": "main",
         },
+        {
+            "name": "Debug (Mems1)",
+            "type": "cortex-debug",
+            "preLaunchTask": "build-mems1",
+            "request": "launch",
+            "servertype": "openocd",
+            "cwd": "${workspaceRoot}",
+            "executable": "${workspaceRoot}/target/thumbv7em-none-eabihf/debug/examples/mems1",
+            "device": "STM32F411VET6",
+            "svdFile": "${workspaceRoot}/STM32F411.svd",
+            "configFiles": [
+                "interface/stlink.cfg",
+                "target/stm32f4x.cfg"
+            ],
+            "swoConfig": {
+                "enabled": true,
+                "cpuFrequency": 100000000,
+                "swoFrequency": 2000000,
+                "source": "probe",
+                "decoders": [
+                    {
+                        "type": "console",
+                        "label": "ITM",
+                        "port": 0
+                    }
+                ]
+            },
+            "runToEntryPoint": "main",
+        },
     ]
 }    

@@ -32,6 +32,22 @@
                 "kind": "build",
                 "isDefault": true
             }
+        },
+        {
+            "label": "build-mems1",
+            "command": "cargo",
+            "args": [
+                "build",
+                "--example",
+                "mems1"
+            ],
+            "problemMatcher": [
+                "$rustc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         }
     ]
 }
